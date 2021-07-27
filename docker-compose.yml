@@ -1,42 +1,60 @@
-version: '3.9'
+version: "3.9"
 
 services:
-    nginx:
-        build:
-            context: ./bin
-            dockerfile: Dockerfile-nginx
-        ports:
-            - 80:80
-        volumes:
-            - ./src:/var/www/php
-            - ./.docker/nginx/conf.d:/etc/nginx/conf.d
-        depends_on:
-            - php
-    php:
-        build:
-            context: ./bin
-            dockerfile: Dockerfile-php
-        working_dir: /var/www/php
-        volumes:
-            - ./src:/var/www/php
-        depends_on:
-            mysql:
-                condition: service_healthy
+  nginx:
+    build:
+      context: ./bin
+      dockerfile: Dockerfile-nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./src:/var/www/php
+      - ./.docker/nginx/conf.d:/etc/nginx/conf.d
+      - phpmyadmindata:/var/www/phpmyadmin
+    depends_on:
+      - php
+      - phpmyadmin
 
-    mysql:
-        build:
-            context: ./bin
-            dockerfile: Dockerfile-mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${MYSQL_DATABASE}
-        volumes:
-            - ./.docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-            - mysqldata:/var/lib/mysql
-        healthcheck:
-            test: mysqladmin ping -h 127.0.0.1 -u root --password=${MYSQL_ROOT_PASSWORD}
-            interval: 5s
-            retries: 10
+  php:
+    build:
+      context: ./bin
+      dockerfile: Dockerfile-php
+    working_dir: /var/www/php
+    volumes:
+      - ./src:/var/www/php
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    build:
+      context: ./bin
+      dockerfile: Dockerfile-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - ./.docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - mysqldata:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u root --password=${MYSQL_ROOT_PASSWORD}
+      interval: 5s
+      retries: 10
+
+  phpmyadmin:
+    build:
+      context: ./bin
+      dockerfile: Dockerfile-pma
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: mysql
+    volumes:
+      - phpmyadmindata:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
 
 volumes:
-    mysqldata:
+  mysqldata:
+  phpmyadmindata:
