@@ -9,6 +9,8 @@ services:
       - 80:80
     volumes:
       - ./src:/var/www/php
+      - ./src:/var/www/south
+
       - ./.docker/nginx/conf.d:/etc/nginx/conf.d
       - phpmyadmindata:/var/www/phpmyadmin
     depends_on:
@@ -21,6 +23,7 @@ services:
       dockerfile: Dockerfile-php
     working_dir: /var/www/php
     volumes:
+      - ../site-cms:/var/www/south
       - ./src:/var/www/php
     depends_on:
       mysql:
